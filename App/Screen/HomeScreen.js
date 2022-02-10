@@ -3,14 +3,14 @@ import {
   StyleSheet,
   ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   Alert,
 } from "react-native";
-import axios from "axios";
+import getDataApi from "../Api/getData";
 import Screen from "../components/Screen";
 import AppTextInput from "../components/AppTextInput";
 import AppText from "../components/AppText";
+import Card from '../components/Card'
 import colors from "../config/colors";
 function HomeScreen() {
   const [searchedWord, setSearchedWord] = useState("");
@@ -19,33 +19,30 @@ function HomeScreen() {
   const getData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `http://api.giphy.com/v1/gifs/search?q=${searchedWord} &limit=4 &api_key=4L8vbrY0Yf0GpnXzHV6QNlMhdAfUAtg4`
-      );
+      const response = await getDataApi(searchedWord);
       setData(response.data.data);
       setLoading(false);
     } catch (error) {
       console.log(error);
     }
   };
+  const onPress = () => {
+    if (searchedWord) {
+      getData();
+    } else
+      Alert.alert("Warning", "You Should search about anything", [
+        { text: "OK" },
+      ]);
+  };
 
   return (
     <Screen style={styles.container}>
       <AppTextInput
         icon="text-box-search"
+        style={styles.searchBox}
         onChangeText={(text) => setSearchedWord(text)}
       />
-      <Pressable
-        style={styles.searchBtn}
-        onPress={() => {
-          if (searchedWord) {
-            getData();
-          } else
-            Alert.alert("Warning", "You Should search about anything", [
-              { text: "OK" },
-            ]);
-        }}
-      >
+      <Pressable style={styles.searchBtn} onPress={onPress}>
         <AppText style={styles.searchBtnText}>Search</AppText>
       </Pressable>
 
@@ -57,18 +54,17 @@ function HomeScreen() {
           style={styles.loading}
         />
       )}
-      {data && (
+      {data ? (
         <FlatList
           data={data}
           renderItem={({ item }) => (
-            <Image
-              source={{ uri: item.images.fixed_height_small.url }}
-              style={styles.gifImage}
+            <Card
+              imageUrl= {item.images.fixed_height_small.url }
             />
           )}
           keyExtractor={(item) => item.id.toString()}
         />
-      )}
+      ):""}
     </Screen>
   );
 }
@@ -76,7 +72,10 @@ function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
+    alignItems:"center",
     backgroundColor: colors.white,
+  },searchBox:{
+   width:"90%"
   },
   searchBtn: {
     width: 130,
@@ -95,10 +94,6 @@ const styles = StyleSheet.create({
   loading: {
     padding: 200,
   },
-  gifImage: {
-    width: 400,
-    height: 300,
-    marginBottom: 10,
-  },
+
 });
 export default HomeScreen;
